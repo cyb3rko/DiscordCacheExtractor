@@ -109,6 +109,9 @@ func readArgs() (string, string, int, bool) {
 			continue
 		}
 
+		if argsWithoutProg[i] == "-k" {
+			keepUnknownFileTypes = true
+		}
 	}
 
 	return src, dst, chunkSize, keepUnknownFileTypes
@@ -143,12 +146,10 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, startName int, 
 				fileType := strings.Split(fileTypeRaw, "/")[1]
 
 				if fileType != "octet-stream" || keepUnknownFileTypes { // Skip Files with unknown type
-					err = copy(orig+f.Name(), dst+strconv.Itoa(startName)+"."+fileType)
+					err = copy(orig+f.Name(), dst+f.Name()+"."+fileType)
 
 					if err != nil {
 						log.Printf("Unable to copy: %v \n Error: %v", f, err)
-					} else {
-						startName++
 					}
 				}
 			}
