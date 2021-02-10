@@ -17,7 +17,7 @@ var wg = sync.WaitGroup{}
 
 func main() {
 
-	src, dst, chunkSize, keepUnknownFileTypes := readArgs()
+	src, dst, pathSeperator, chunkSize, keepUnknownFileTypes := readArgs()
 
 	if len(src) < 1 || len(dst) < 1 {
 		printHelp()
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	files, err := ioutil.ReadDir(src)
-	sourceBasePath := src + "\\"
+	sourceBasePath := src + pathSeperator
 
 	if err != nil {
 		fmt.Println("There are no files in this directory.")
@@ -65,7 +65,7 @@ func main() {
 
 }
 
-func readArgs() (string, string, int, bool) {
+func readArgs() (string, string, string, int, bool) {
 
 	argsWithoutProg := os.Args[1:] // Argument Input
 
@@ -74,16 +74,29 @@ func readArgs() (string, string, int, bool) {
 	src := ""
 	chunkSize := 10
 	keepUnknownFileTypes := false
+	pathSeperator := "\\"
+
+	if runtime.GOOS != "windows" {
+		pathSeperator = "/"
+	}
 
 	for i := 0; i < len(argsWithoutProg); i++ {
 
 		if argsWithoutProg[i] == "-src" {
-			src = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+			if pathSeperator == "\\" {
+				src = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+			} else {
+				src = argsWithoutProg[i+1]
+			}
 			continue
 		}
 
 		if argsWithoutProg[i] == "-dst" {
-			dst = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+			if pathSeperator == "\\" {
+				dst = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+			} else {
+				dst = argsWithoutProg[i+1]
+			}
 			continue
 		}
 
@@ -114,7 +127,7 @@ func readArgs() (string, string, int, bool) {
 		}
 	}
 
-	return src, dst, chunkSize, keepUnknownFileTypes
+	return src, dst, pathSeperator, chunkSize, keepUnknownFileTypes
 }
 
 func printHelp() {
@@ -146,10 +159,12 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, startName int, 
 				fileType := strings.Split(fileTypeRaw, "/")[1]
 
 				if fileType != "octet-stream" || keepUnknownFileTypes { // Skip Files with unknown type
-					err = copy(orig+f.Name(), dst+f.Name()+"."+fileType)
+					err = copy(orig+f.Name(), dst+strconv.Itoa(startName)+"."+fileType)
 
 					if err != nil {
 						log.Printf("Unable to copy: %v \n Error: %v", f, err)
+					} else {
+						startName++
 					}
 				}
 			}
