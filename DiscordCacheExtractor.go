@@ -28,7 +28,6 @@ func main() {
 	}
 
 	files, err := ioutil.ReadDir(src)
-	sourceBasePath := src + pathSeperator
 
 	if err != nil {
 		fmt.Println("There are no files in this directory.")
@@ -36,6 +35,8 @@ func main() {
 		fmt.Println("PROGRAM STOPPED")
 		os.Exit(2)
 	}
+
+	sourceBasePath := src + pathSeperator
 
 	chunkList := []os.FileInfo{}
 	var calculatedFiles int = 0
@@ -67,11 +68,16 @@ func main() {
 
 func readArgs() (string, string, string, int, bool) {
 
+	if len(os.Args[1:]) < 1 {
+		printHelp()
+		log.Fatal("Missing arguments!")
+	}
+
 	argsWithoutProg := os.Args[1:] // Argument Input
 
 	// STANDARD PARAMETER
-	dst := ""
 	src := ""
+	dst, _ := os.Getwd()
 	chunkSize := 10
 	keepUnknownFileTypes := false
 	pathSeperator := "\\"
@@ -80,51 +86,68 @@ func readArgs() (string, string, string, int, bool) {
 		pathSeperator = "/"
 	}
 
-	for i := 0; i < len(argsWithoutProg); i++ {
+	if len(argsWithoutProg) == 1 { // Accept execution with one parameter without defining it wit -src
+		src = argsWithoutProg[0]
 
-		if argsWithoutProg[i] == "-src" {
-			if pathSeperator == "\\" {
-				src = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
-			} else {
-				src = argsWithoutProg[i+1]
+	} else {
+		for i := 0; i < len(argsWithoutProg); i++ {
+
+			if argsWithoutProg[i] == "-src" {
+				if pathSeperator == "\\" {
+					src = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+				} else {
+					src = argsWithoutProg[i+1]
+				}
+				continue
 			}
-			continue
-		}
 
-		if argsWithoutProg[i] == "-dst" {
-			if pathSeperator == "\\" {
-				dst = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
-			} else {
-				dst = argsWithoutProg[i+1]
+			if argsWithoutProg[i] == "-dst" {
+				if pathSeperator == "\\" {
+					dst = strings.Replace(argsWithoutProg[i+1], "\\", "\\\\", -1)
+				} else {
+					dst = argsWithoutProg[i+1]
+				}
+				continue
 			}
-			continue
-		}
 
-		if argsWithoutProg[i] == "-cs" {
-			tmp, err := strconv.Atoi(argsWithoutProg[i+1])
-			if err != nil || chunkSize < 1 {
-				chunkSize = 5
-				log.Printf("Error: %v \n Set chunkSize to %v.", err, chunkSize)
-			} else {
-				chunkSize = tmp
+			if argsWithoutProg[i] == "-cs" {
+				tmp, err := strconv.Atoi(argsWithoutProg[i+1])
+				if err != nil || tmp < 1 {
+					chunkSize = 5
+					log.Printf("Error: %v \n Set chunkSize to %v.", err, chunkSize)
+				} else {
+					chunkSize = tmp
+				}
+				continue
 			}
-			continue
-		}
 
-		if argsWithoutProg[i] == "-t" {
-			threadCount, err := strconv.Atoi(argsWithoutProg[i+1])
+			if argsWithoutProg[i] == "-tc" {
+				threadCount, err := strconv.Atoi(argsWithoutProg[i+1])
 
-			if err != nil || threadCount < 1 {
-				log.Printf("Error: %v \n threadCount was not set.", err)
-			} else {
-				runtime.GOMAXPROCS(threadCount)
+				if err != nil || threadCount < 1 {
+					log.Printf("Error: %v \n threadCount was not set.", err)
+				} else {
+					runtime.GOMAXPROCS(threadCount)
+				}
+				continue
 			}
-			continue
-		}
 
-		if argsWithoutProg[i] == "-k" {
-			keepUnknownFileTypes = true
+			if argsWithoutProg[i] == "-s" {
+				pathSeperator = argsWithoutProg[i+1]
+			}
+
+			if argsWithoutProg[i] == "-k" {
+				keepUnknownFileTypes = true
+				continue
+			}
 		}
+	}
+
+	if src == "" || dst == "" { // Error detection
+		log.Fatal("Necessary parameters are missing.")
+	}
+	if string(dst[len(dst)-1:]) != pathSeperator { // Make sure the destination is a Folder.
+		dst += pathSeperator
 	}
 
 	return src, dst, pathSeperator, chunkSize, keepUnknownFileTypes
@@ -132,11 +155,12 @@ func readArgs() (string, string, string, int, bool) {
 
 func printHelp() {
 	fmt.Println("HELP PAGE") // todo: Design Help Page
-	fmt.Println("-src [Path] - enter Discord path")
-	fmt.Println("-dst [Path] - enter path to save")
+	fmt.Println("-src [Path] - enter Discord path *necessary")
+	fmt.Println("-dst [Path] - enter path to save *necessary")
 	fmt.Println("-cs [Num] - enter how big the chunk for each thread should be")
-	fmt.Println("-t [Num] - How many threads should run at once")
+	fmt.Println("-tc [Num] - How many threads should run at once")
 	fmt.Println("-k - keep files with unknown filetype")
+	fmt.Println("-s [/ or \\\\] - seperator used by your file system")
 }
 
 func fileArrayCopy(files []os.FileInfo, dst string, orig string, startName int, keepUnknownFileTypes bool) {
