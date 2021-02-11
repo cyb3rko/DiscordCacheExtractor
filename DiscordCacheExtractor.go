@@ -156,7 +156,7 @@ func readArgs() (string, string, string, int, bool) {
 func printHelp() {
 	fmt.Println("HELP PAGE") // todo: Design Help Page
 	fmt.Println("-src [Path] - enter Discord path *necessary")
-	fmt.Println("-dst [Path] - enter path to save *necessary")
+	fmt.Println("-dst [Path] - enter path to save")
 	fmt.Println("-cs [Num] - enter how big the chunk for each thread should be")
 	fmt.Println("-tc [Num] - How many threads should run at once")
 	fmt.Println("-k - keep files with unknown filetype")
