@@ -17,7 +17,7 @@ var wg = sync.WaitGroup{}
 
 func main() {
 
-	src, dst, pathSeperator, chunkSize, keepUnknownFileTypes := readArgs()
+	src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes := readArgs()
 
 	if len(src) < 1 || len(dst) < 1 {
 		printHelp()
@@ -45,13 +45,13 @@ func main() {
 
 	for num, f := range files {
 
-		if !strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") {
+		if !strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") && !strings.Contains(f.Name(), ".") {
 			chunkList = append(chunkList, f)
 		}
 
 		if len(chunkList)%chunkSize == 0 && num != 0 {
 			wg.Add(1)
-			go fileArrayCopy(chunkList, dst, sourceBasePath, calculatedFiles, keepUnknownFileTypes)
+			go fileArrayCopy(chunkList, dst, sourceBasePath, name, calculatedFiles, keepUnknownFileTypes)
 			chunkList = []os.FileInfo{}
 			calculatedFiles += chunkSize
 		}
@@ -59,14 +59,14 @@ func main() {
 
 	if len(chunkList) > 0 {
 		wg.Add(1)
-		go fileArrayCopy(chunkList, dst, sourceBasePath, calculatedFiles, keepUnknownFileTypes)
+		go fileArrayCopy(chunkList, dst, sourceBasePath, name, calculatedFiles, keepUnknownFileTypes)
 	}
 
 	wg.Wait()
 
 }
 
-func readArgs() (string, string, string, int, bool) {
+func readArgs() (string, string, string, string, int, bool) {
 
 	if len(os.Args[1:]) < 1 {
 		printHelp()
@@ -81,6 +81,7 @@ func readArgs() (string, string, string, int, bool) {
 	chunkSize := 10
 	keepUnknownFileTypes := false
 	pathSeperator := "\\"
+	name := "Picture_"
 
 	if runtime.GOOS != "windows" {
 		pathSeperator = "/"
@@ -140,6 +141,10 @@ func readArgs() (string, string, string, int, bool) {
 				keepUnknownFileTypes = true
 				continue
 			}
+
+			if argsWithoutProg[i] == "-n" {
+				name = argsWithoutProg[i+1]
+			}
 		}
 	}
 
@@ -150,7 +155,7 @@ func readArgs() (string, string, string, int, bool) {
 		dst += pathSeperator
 	}
 
-	return src, dst, pathSeperator, chunkSize, keepUnknownFileTypes
+	return src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes
 }
 
 func printHelp() {
@@ -163,7 +168,7 @@ func printHelp() {
 	fmt.Println("-s [/ or \\\\] - seperator used by your file system")
 }
 
-func fileArrayCopy(files []os.FileInfo, dst string, orig string, startName int, keepUnknownFileTypes bool) {
+func fileArrayCopy(files []os.FileInfo, dst string, orig string, name string, startName int, keepUnknownFileTypes bool) {
 
 	for _, f := range files {
 		file, err := os.Open(orig + f.Name())
@@ -183,7 +188,7 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, startName int, 
 				fileType := strings.Split(fileTypeRaw, "/")[1]
 
 				if fileType != "octet-stream" || keepUnknownFileTypes { // Skip Files with unknown type
-					err = copy(orig+f.Name(), dst+strconv.Itoa(startName)+"."+fileType)
+					err = copy(orig+f.Name(), dst+name+strconv.Itoa(startName)+"."+fileType)
 
 					if err != nil {
 						log.Printf("Unable to copy: %v \n Error: %v", f, err)
