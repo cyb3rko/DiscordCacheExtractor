@@ -87,7 +87,7 @@ func readArgs() (string, string, string, string, int, bool) {
 		pathSeperator = "/"
 	}
 
-	if len(argsWithoutProg) == 1 { // Accept execution with one parameter without defining it wit -src
+	if len(argsWithoutProg) == 1 { // Accept execution with one parameter without defining it with -src
 		src = argsWithoutProg[0]
 
 	} else {
@@ -159,7 +159,7 @@ func readArgs() (string, string, string, string, int, bool) {
 }
 
 func printHelp() {
-	fmt.Println("HELP PAGE") // todo: Design Help Page
+	fmt.Println("HELP PAGE")
 	fmt.Println("-src [Path] - enter Discord path *necessary")
 	fmt.Println("-dst [Path] - enter path to save")
 	fmt.Println("-cs [Num] - enter how big the chunk for each thread should be")
@@ -169,6 +169,8 @@ func printHelp() {
 }
 
 func fileArrayCopy(files []os.FileInfo, dst string, orig string, name string, startName int, keepUnknownFileTypes bool) {
+
+	defer wg.Done()
 
 	for _, f := range files {
 		file, err := os.Open(orig + f.Name())
@@ -199,7 +201,6 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, name string, st
 			}
 		}
 	}
-	wg.Done()
 }
 
 func copy(src, dst string) error {

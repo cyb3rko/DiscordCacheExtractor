@@ -1,6 +1,6 @@
-#DiscordCacheExtractor
+### DiscordCacheExtractor
 
-###**Summary**
+### Summary
 A small console based tool to detect and convert files, saved in the discord cache.
 
 ### What can it do?
@@ -45,7 +45,7 @@ Marks that you also want to copy files with undetected filetype.
 
 ##### -s [/ or \\]
 Set the path seperator, used by your system.  
-- Windows: \\
+- Windows: \\\\
 - Linux: /
 
 ------------
