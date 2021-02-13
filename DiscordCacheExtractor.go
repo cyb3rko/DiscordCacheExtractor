@@ -17,7 +17,7 @@ var wg = sync.WaitGroup{}
 
 func main() {
 
-	src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes := readArgs()
+	src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes, discordMode := readArgs()
 
 	if len(src) < 1 || len(dst) < 1 {
 		printHelp()
@@ -45,8 +45,14 @@ func main() {
 
 	for num, f := range files {
 
-		if !strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") && !strings.Contains(f.Name(), ".") {
-			chunkList = append(chunkList, f)
+		if discordMode {
+			if !strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") && !strings.Contains(f.Name(), ".") {
+				chunkList = append(chunkList, f)
+			}
+		} else {
+			if !strings.Contains(f.Name(), ".") {
+				chunkList = append(chunkList, f)
+			}
 		}
 
 		if len(chunkList)%chunkSize == 0 && num != 0 {
@@ -66,7 +72,7 @@ func main() {
 
 }
 
-func readArgs() (string, string, string, string, int, bool) {
+func readArgs() (src string, dst string, pathSeperator string, name string, chunkSize int, keepUnknownFileTypes bool, discordMode bool) {
 
 	if len(os.Args[1:]) < 1 {
 		printHelp()
@@ -76,12 +82,12 @@ func readArgs() (string, string, string, string, int, bool) {
 	argsWithoutProg := os.Args[1:] // Argument Input
 
 	// STANDARD PARAMETER
-	src := ""
-	dst, _ := os.Getwd()
-	chunkSize := 10
-	keepUnknownFileTypes := false
-	pathSeperator := "\\"
-	name := "Picture_"
+	dst, _ = os.Getwd()
+	chunkSize = 10
+	keepUnknownFileTypes = false
+	pathSeperator = "\\"
+	name = "Picture_"
+	discordMode = true
 
 	if runtime.GOOS != "windows" {
 		pathSeperator = "/"
@@ -145,6 +151,10 @@ func readArgs() (string, string, string, string, int, bool) {
 			if argsWithoutProg[i] == "-n" {
 				name = argsWithoutProg[i+1]
 			}
+
+			if argsWithoutProg[i] == "-!d" {
+				discordMode = false
+			}
 		}
 	}
 
@@ -155,7 +165,7 @@ func readArgs() (string, string, string, string, int, bool) {
 		dst += pathSeperator
 	}
 
-	return src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes
+	return
 }
 
 func printHelp() {
