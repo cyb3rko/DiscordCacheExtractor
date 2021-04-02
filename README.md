@@ -50,4 +50,13 @@ Set the path seperator, used by your system.
 
 ------------
 
+##### -n [name]
+Set the name of the later media files. A number is attached to it automatically.
+
+------------
+##### -!d
+Also try to convert files, which are named as "data" or "index" that are normally excluded.
+
+------------
+
 ###### Last updated: 2021-02-11 14:04:08 Thursday
