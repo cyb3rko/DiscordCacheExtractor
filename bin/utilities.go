@@ -33,7 +33,7 @@ func readArgs() (src string, dst string, pathSeperator string, name string, chun
 	}
 
 	if len(argsWithoutProg) == 1 { // Accept execution with one parameter without defining it with -src
-		src = argsWithoutProg[0]
+			src = argsWithoutProg[0]
 
 	} else {
 		for i := 0; i < len(argsWithoutProg); i++ {
@@ -96,9 +96,9 @@ func readArgs() (src string, dst string, pathSeperator string, name string, chun
 	}
 
 	if src == "" || dst == "" { // Error detection
-		log.Fatal("Necessary parameters are missing.")
+		log.Fatalf("Necessary parameters are missing. Src: %v Dst: %v", src, dst)
 	}
-	if string(dst[len(dst)-1:]) != pathSeperator { // Make sure the destination is a Folder.
+	if dst[len(dst)-1:] != pathSeperator { // Make sure the destination is a Folder.
 		dst += pathSeperator
 	}
 
@@ -115,24 +115,24 @@ func printHelp() {
 	fmt.Println("-s [/ or \\\\] - seperator used by your file system")
 }
 
-func getContentInNextQuotes(allArgs []string, startPoint int) (content string) {
+func getContentInNextQuotes(argSlice []string, startPoint int) (content string) {
 	startRead := false
 
-	for i := startPoint; i < len(allArgs); i++ {
-		if allArgs[i][0] == '"' {
+	for i := startPoint; i < len(argSlice); i++ {
+		if argSlice[i][0] == '"' {
 			if !startRead {
 				startRead = true
 			}
 		}
 		if startRead {
-			content += allArgs[i]
+			content += argSlice[i]
+			fmt.Printf("Added %v to content", argSlice[i])
 		}
-		if allArgs[i][:1] == "\"" {
+		if argSlice[i][:1] == "\"" {
 			content = strings.Replace(content, "\"", "", -1)
 			return
 		}
 	}
-	content = strings.Replace(content, "\"", "", -1)
 	return
 }
 
@@ -141,16 +141,11 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, name string, st
 	defer wg.Done()
 
 	for _, f := range files {
-		file, err := os.Open(orig + f.Name())
-
-		if err != nil {
+		if file, err := os.Open(orig + f.Name()); err != nil {
 			log.Printf("Can not open file: %v \n Error: %v", f, err)
 
 		} else {
-			defer file.Close()
-
-			fileTypeRaw, err := getFileContentType(file)
-			if err != nil {
+			if fileTypeRaw, err := getFileContentType(file); err != nil {
 				log.Printf("Unable to get filetype of: %v \n Error: %v", f, err)
 			} else {
 
@@ -158,20 +153,19 @@ func fileArrayCopy(files []os.FileInfo, dst string, orig string, name string, st
 				fileType := strings.Split(fileTypeRaw, "/")[1]
 
 				if fileType != "octet-stream" || keepUnknownFileTypes { // Skip Files with unknown type
-					err = copy(orig+f.Name(), dst+name+strconv.Itoa(startName)+"."+fileType)
-
-					if err != nil {
+					if err = copyFiles(orig+f.Name(), dst+name+strconv.Itoa(startName)+"."+fileType); err != nil {
 						log.Printf("Unable to copy: %v \n Error: %v", f, err)
 					} else {
 						startName++
 					}
 				}
 			}
+			file.Close()
 		}
 	}
 }
 
-func copy(src, dst string) error {
+func copyFiles(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
 		return err

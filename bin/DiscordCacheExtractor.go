@@ -14,6 +14,8 @@ var wg = sync.WaitGroup{}
 func main() {
 
 	src, dst, pathSeperator, name, chunkSize, keepUnknownFileTypes, discordMode := readArgs()
+	var chunkList []os.FileInfo
+	var calculatedFiles = 0
 
 	if len(src) < 1 || len(dst) < 1 {
 		printHelp()
@@ -34,36 +36,33 @@ func main() {
 
 	sourceBasePath := src + pathSeperator
 
-	chunkList := []os.FileInfo{}
-	var calculatedFiles int = 0
-
-	fmt.Println("Copying files.")
+	fmt.Println("Copying files..")
 
 	for num, f := range files {
 
-		if discordMode {
-			if !strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") && !strings.Contains(f.Name(), ".") {
-				chunkList = append(chunkList, f)
-			}
-		} else {
-			if !strings.Contains(f.Name(), ".") {
-				chunkList = append(chunkList, f)
-			}
+		if (!strings.Contains(f.Name(), "data") && !strings.Contains(f.Name(), "index") || discordMode) && !strings.Contains(f.Name(), ".") {
+			chunkList = append(chunkList, f)
 		}
 
 		if len(chunkList)%chunkSize == 0 && num != 0 {
+			// Start copy process
 			wg.Add(1)
 			go fileArrayCopy(chunkList, dst, sourceBasePath, name, calculatedFiles, keepUnknownFileTypes)
+
+			// Clear the slice
 			chunkList = []os.FileInfo{}
+			// Add new name range
 			calculatedFiles += chunkSize
+			fmt.Printf("%.2f%%\n", (float64(calculatedFiles)/float64(len(files)))*100)
 		}
 	}
 
+	// Start last process if the number of files was not dividable by the chunksize
 	if len(chunkList) > 0 {
 		wg.Add(1)
 		go fileArrayCopy(chunkList, dst, sourceBasePath, name, calculatedFiles, keepUnknownFileTypes)
 	}
 
 	wg.Wait()
-
+	fmt.Println("Done!")
 }
