@@ -10,18 +10,17 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  generate:
+    name: Generate cross-platform builds
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Compile binary
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+      - name: Generate build files
         uses: thatisuday/go-cross-build@v1
         with:
           platforms: linux/amd64,darwin/amd64,windows/amd64,linux/arm64,darwin/amd64
-          name: semver-gen
-          package: ./
+          name: 'program'
+          package: 'demo'
           compress: false
-          dest: dist
+          dest: '.output'
